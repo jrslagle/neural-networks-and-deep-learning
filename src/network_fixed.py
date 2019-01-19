@@ -17,14 +17,20 @@ import time
 # Third-party libraries
 import numpy as np
 
+# To splice sizes into [784, 10]
+# In [34]:a = [0, 0, 1, 4, 7, 16, 31, 64, 127]
+# In [35]: b = a[:5] + [101, 102] + a[5:]
+# In [36]: b
+# Out[36]: [0, 1, 1, 4, 7, 101, 102, 16, 31, 64, 127]
+
 class Network(object):
     
     def __init__(self, sizes, seed=None):
         self.num_layers = len(sizes)
         self.sizes = sizes
         if seed is None:
-            seed = np.random.randint(0,pow(2,32)
-        self.master_seed = seed
+            seed = np.random.randint(0,pow(2,32))
+        self.master_seed = seed  # Max seed = 4,294,967,295
         seed_generator = np.random.RandomState(self.master_seed)
         bias_generator = np.random.RandomState(seed_generator.randint(0,pow(2,32)))
         weight_generator = np.random.RandomState(seed_generator.randint(0,pow(2,32)))
@@ -70,15 +76,14 @@ class Network(object):
 
             stop = time.time()
             train_time = stop - start
-            if test_data:    
+            if j == (epochs - 1) and test_data:
                 start = time.time()
                 score = self.evaluate(test_data) / float(n_test)
                 stop = time.time()
                 test_time = stop - start
-                print "Epoch %d: score = %.4f , training time = %.3f s, testing time = %.3f s" % (
-                    j, score, train_time, test_time)
-            else:
-                print "Epoch {0} complete".format(j)
+#                print "Epoch %d: score = %.4f, training time = %.3f s, testing time = %.3f s" % (
+#                    j, score, train_time, test_time)
+                return "%.4f" % (score)
                 
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying

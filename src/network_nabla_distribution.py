@@ -23,8 +23,8 @@ class Network(object):
         self.num_layers = len(sizes)
         self.sizes = sizes
         if seed is None:
-            seed = np.random.randint(0,pow(2,32)
-        self.master_seed = seed
+            seed = np.random.randint(0,pow(2,32))
+        self.master_seed = seed  # Max seed = 4,294,967,295
         seed_generator = np.random.RandomState(self.master_seed)
         bias_generator = np.random.RandomState(seed_generator.randint(0,pow(2,32)))
         weight_generator = np.random.RandomState(seed_generator.randint(0,pow(2,32)))
@@ -56,7 +56,6 @@ class Network(object):
         if test_data: n_test = len(test_data)
         n = len(training_data)
         for j in xrange(epochs):
-            start = time.time()
             shuffle_seed = self.shuffle_seeds.randint(0,pow(2,32))
             shuffler = np.random.RandomState(shuffle_seed)
             shuffler.shuffle(training_data)
@@ -68,23 +67,25 @@ class Network(object):
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
 
-            stop = time.time()
-            train_time = stop - start
+#            stop = time.time()
+#            train_time = stop - start
             if test_data:    
-                start = time.time()
+#                start = time.time()
                 score = self.evaluate(test_data) / float(n_test)
-                stop = time.time()
-                test_time = stop - start
-                print "Epoch %d: score = %.4f , training time = %.3f s, testing time = %.3f s" % (
-                    j, score, train_time, test_time)
+#                stop = time.time()
+#                test_time = stop - start
+#                print "Epoch %d: score = %.4f, training time = %.3f s, testing time = %.3f s" % (
+#                    j, score, train_time, test_time)
+                print "%.4f" % (score)
             else:
                 print "Epoch {0} complete".format(j)
                 
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
         gradient descent using backpropagation to a single mini batch.
-        The "mini_batch" is a list of tuples "(x, y)", and "eta"
-        is the learning rate."""
+        The "training_batch" is a list of tuples "(x, y)". "(x, y) is a
+        training example x and the answer, y. "learning_rate"
+        is a coefficient applied to the error gradient."""
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in mini_batch:
@@ -96,6 +97,32 @@ class Network(object):
         self.biases = [b-(eta/len(mini_batch))*nb 
             for b, nb in zip(self.biases, nabla_b)]
 
+    def compile_nablas(self, training_batch):
+        """Regenerate all the nabla arrays using backprop for each training
+        example in training_batch and store them in an array. The
+        "training_batch" is a list of tuples "(x, y)". "(x, y) is a
+        training example x and the answer, y."""
+
+        # this block takes 0.0086 s to execute        
+        nabla_list = []
+        for x, y in training_batch:
+            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+            nabla_list.append(np.array(delta_nabla_w))
+            print type(nabla_list)
+        print "Nabla list"
+        print nabla_list
+        print type(nabla_list)
+
+        # nabla is a 4D array with format
+        # nablas[example][layer][to_neuron][from_neuron]
+        # size = training examples * weights
+        nablas = np.vstack(nabla_list)
+#        nablas = nablas.reshape((3,2,10,2))
+
+        print "Nablas array is a %s with shape %s." % (type(nablas), nablas.shape)
+
+        return nablas
+    
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
         gradient for the cost function C_x.  ``nabla_b`` and
@@ -144,6 +171,34 @@ class Network(object):
         """Return the vector of partial derivatives \partial C_x /
         \partial a for the output activations."""
         return (output_activations-y)
+    
+    def compute_stdevs(self, nablas):
+        
+        # nablas[example][layer][to_neuron][from_neuron]
+        # stdevs[layer][to_neuron][from_neuron]
+        stdevs = nablas.std(axis=0)
+#        reshaped = []
+#        
+#        for example in nablas:
+#            for layer in example:
+#                for to_neuron in layer:
+#                    for from_neuron in to_neuron:
+##                        reshaped[layer][to_neuron][from_neuron][example] = nablas[example][layer][to_neuron][from_neuron]
+#        
+#        
+        
+        # size = weights
+        return stdevs
+        
+    def get_weight(nablas, index):
+        
+        # size = len(training_data)
+        return vectors_on_weight
+        
+    # This should probably be in a more general class
+    def export_csv(complex_array, filename):
+        return filename
+    
 
 #### Miscellaneous functions
 def sigmoid(z):
