@@ -59,10 +59,8 @@ class Network(object):
         network will be evaluated against the test data after each
         epoch, and partial progress printed out.  This is useful for
         tracking progress, but slows things down substantially."""
-        if test_data: n_test = len(test_data)
         n = len(training_data)
         for j in xrange(epochs):
-            start = time.time()
             shuffle_seed = self.shuffle_seeds.randint(0,pow(2,32))
             shuffler = np.random.RandomState(shuffle_seed)
             shuffler.shuffle(training_data)
@@ -74,17 +72,10 @@ class Network(object):
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
 
-            stop = time.time()
-            train_time = stop - start
             if j == (epochs - 1) and test_data:
-                start = time.time()
-                score = self.evaluate(test_data) / float(n_test)
-                stop = time.time()
-                test_time = stop - start
-#                print "Epoch %d: score = %.4f, training time = %.3f s, testing time = %.3f s" % (
-#                    j, score, train_time, test_time)
-                return "%.4f" % (score)
-                
+                score = self.evaluate(test_data)
+                return score
+    
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
         gradient descent using backpropagation to a single mini batch.
@@ -143,7 +134,9 @@ class Network(object):
         neuron in the final layer has the highest activation."""
         test_results = [(np.argmax(self.feedforward(x)), y)
                         for (x, y) in test_data]
-        return sum(int(x == y) for (x, y) in test_results)
+        total = sum(int(x == y) for (x, y) in test_results)
+        length = float(len(test_data))
+        return total / length
 
     def cost_derivative(self, output_activations, y):
         """Return the vector of partial derivatives \partial C_x /

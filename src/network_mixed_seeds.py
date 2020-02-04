@@ -12,7 +12,6 @@ and omits many desirable features.
 
 #### Libraries
 # Standard library
-import time
 
 # Third-party libraries
 import numpy as np
@@ -30,15 +29,21 @@ class Network(object):
         self.sizes = sizes
         if seed is None:
             seed = np.random.randint(0,pow(2,32))
+#        self.master_seed = 360
         self.master_seed = seed  # Max seed = 4,294,967,295
         seed_generator = np.random.RandomState(self.master_seed)
-#        seed_generator = np.random.RandomState(207)
         bias_generator_seed = seed_generator.randint(0,pow(2,32))
-        bias_generator_seed = 1872583848
+        bias_generator_seed = 2357136044
         weight_generator_seed = seed_generator.randint(0,pow(2,32))
-#        weight_generator_seed = 2546248239
+        weight_generator_seed = 2546248239
         shuffle_seed_generator_seed = seed_generator.randint(0,pow(2,32))
 #        shuffle_seed_generator_seed = 3071714933
+
+#        print("""Master seed = %i\nBias seed = %i\nWeight seed = %i\nShuffle seed = %i""") % (
+#                 self.master_seed,
+#                 bias_generator_seed,
+#                 weight_generator_seed,
+#                 shuffle_seed_generator_seed)
         
         bias_generator = np.random.RandomState(bias_generator_seed)
         weight_generator = np.random.RandomState(weight_generator_seed)
@@ -47,12 +52,6 @@ class Network(object):
         self.biases = [bias_generator.randn(y,1) for y in sizes[1:]]
         self.weights = [weight_generator.randn(y,x)
             for x,y in zip(sizes[:-1], sizes[1:])]
-
-        print("""Master seed = %i\nBias seed = %i\nWeight seed = %i\nShuffle seed = %i""") % (
-                 self.master_seed,
-                 bias_generator_seed,
-                 weight_generator_seed,
-                 shuffle_seed_generator_seed)
 
     def sigmoid(z):
         return 1.0/(1.0+np.exp(-z))
@@ -76,7 +75,6 @@ class Network(object):
         if test_data: n_test = len(test_data)
         n = len(training_data)
         for j in xrange(epochs):
-            start = time.time()
             shuffle_seed = self.shuffle_seeds.randint(0,pow(2,32))
             shuffler = np.random.RandomState(shuffle_seed)
             shuffler.shuffle(training_data)
@@ -87,14 +85,8 @@ class Network(object):
                 for k in xrange(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
-
-            stop = time.time()
-            train_time = stop - start
             if j == (epochs - 1) and test_data:
-                start = time.time()
                 score = self.evaluate(test_data) / float(n_test)
-                stop = time.time()
-                test_time = stop - start
 #                print "Epoch %d: score = %.4f, training time = %.3f s, testing time = %.3f s" % (
 #                    j, score, train_time, test_time)
                 return "%.4f" % (score)
